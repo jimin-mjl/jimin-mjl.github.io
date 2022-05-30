@@ -987,6 +987,9 @@ body {
 .post-list, .post-content, .post-title {
   font-family: 'Nanum Gothic', sans-serif; }
 
+.post-content {
+  line-height: 1.75rem; }
+
 .site-header {
   background-color: #1A1D21 !important; }
 

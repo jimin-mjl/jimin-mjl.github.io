@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Nginx와 Gunicorn으로 Flask앱 배포하기 | Curious Libertine</title>
+<meta name="generator" content="Jekyll v3.9.2" />
+<meta property="og:title" content="Nginx와 Gunicorn으로 Flask앱 배포하기" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="1. 참고 자료 nginx 설치 gunicorn 설치 및 nginx와 연결 우분투 서버에서 flask앱 배포하기" />
+<meta property="og:description" content="1. 참고 자료 nginx 설치 gunicorn 설치 및 nginx와 연결 우분투 서버에서 flask앱 배포하기" />
+<link rel="canonical" href="http://localhost:4000/%EC%84%9C%EB%B2%84%EA%B0%9C%EB%B0%9C/2021/02/08/deploying-flask-app.html" />
+<meta property="og:url" content="http://localhost:4000/%EC%84%9C%EB%B2%84%EA%B0%9C%EB%B0%9C/2021/02/08/deploying-flask-app.html" />
+<meta property="og:site_name" content="Curious Libertine" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2021-02-08T00:00:00+09:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Nginx와 Gunicorn으로 Flask앱 배포하기" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2021-02-08T00:00:00+09:00","datePublished":"2021-02-08T00:00:00+09:00","description":"1. 참고 자료 nginx 설치 gunicorn 설치 및 nginx와 연결 우분투 서버에서 flask앱 배포하기","headline":"Nginx와 Gunicorn으로 Flask앱 배포하기","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/%EC%84%9C%EB%B2%84%EA%B0%9C%EB%B0%9C/2021/02/08/deploying-flask-app.html"},"url":"http://localhost:4000/%EC%84%9C%EB%B2%84%EA%B0%9C%EB%B0%9C/2021/02/08/deploying-flask-app.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+
+<link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="Curious Libertine" />
+
+
+
+
+
+<!-- Google Fonts -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open%20Sans|Roboto|Roboto%20Slab|Inconsolata|Dancing%20Script|Noto%20Sans%20SC|Noto%20Sans%20TC|Noto%20Serif%20SC|Noto%20Serif%20TC|Ma%20Shan%20Zheng">
+
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="stylesheet" href="/assets/css/skin.css">
+
+<!-- Begin selecting skin -->
+
+<!-- End selecting skin -->
+
+<script async src="https://use.fontawesome.com/releases/v5.0.12/js/all.js"></script>
+
+
+<link rel="shortcut icon" href="/assets/favicons.ico/favicon.ico">
+<link rel="apple-touch-icon" sizes="57x57" href="/assets/favicons.ico/apple-icon-57x57.png">
+<link rel="apple-touch-icon" sizes="60x60" href="/assets/favicons.ico/apple-icon-60x60.png">
+<link rel="apple-touch-icon" sizes="72x72" href="/assets/favicons.ico/apple-icon-72x72.png">
+<link rel="apple-touch-icon" sizes="76x76" href="/assets/favicons.ico/apple-icon-76x76.png">
+<link rel="apple-touch-icon" sizes="114x114" href="/assets/favicons.ico/apple-icon-114x114.png">
+<link rel="apple-touch-icon" sizes="120x120" href="/assets/favicons.ico/apple-icon-120x120.png">
+<link rel="apple-touch-icon" sizes="144x144" href="/assets/favicons.ico/apple-icon-144x144.png">
+<link rel="apple-touch-icon" sizes="152x152" href="/assets/favicons.ico/apple-icon-152x152.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/favicons.ico/apple-icon-180x180.png">
+<link rel="icon" type="image/png" sizes="192x192"  href="/assets/favicons.ico/android-icon-192x192.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicons.ico/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="96x96" href="/assets/favicons.ico/favicon-96x96.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/assets/favicons.ico/favicon-16x16.png">
+<link rel="manifest" href="/assets/favicons.ico/manifest.json">
+<meta name="msapplication-TileColor" content="#ffffff">
+<meta name="msapplication-TileImage" content="/assets/favicons.ico/ms-icon-144x144.png">
+<meta name="theme-color" content="#ffffff">
+
+
+  </head>
+
+  <body>
+    <div class="site-container">
+      <header class="site-header">
+        <div class="wrapper">
+  <script>
+    function clickSidebarButton() {
+      const elem = document.getElementById("site-sidebar")
+      if (elem.style.display == "none" || elem.style.display == "") {
+        elem.style.display = "block";
+      } else {
+        elem.style.display = "none";
+      }
+    }
+  </script>
+  <a class="site-sidebar-button" onclick="clickSidebarButton()"><i class="far fa-user"></i>
+  </a>
+
+  <a class="site-title" rel="author" href="/">Curious Libertine</a>
+
+  
+    <nav class="site-nav">
+      <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+      <label for="nav-trigger" title="nav-trigger">
+        <span class="menu-icon">
+          <svg viewBox="0 0 18 15" width="18px" height="15px">
+            <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+          </svg>
+        </span>
+      </label>
+
+      <ul class="trigger">
+              <li><a class="" href="/about/">About</a></li>
+            
+              <li><a class="" href="/categories/">Categories</a></li>
+            
+              <li><a class="" href="/tags/">Tags</a></li>
+            
+              <li><a class="" href="/years/">Years</a></li>
+            </ul>
+    </nav>
+  
+</div>
+
+      </header>
+      
+      <div class="site-body wrapper">
+        <aside class="site-sidebar" id="site-sidebar">
+          
+            <h3 class="toc-title">Table of Contents</h3>
+<nav class="toc-nav">
+  <ul class="toc">
+  <li><a href="#1-참고-자료">1. 참고 자료</a></li>
+  <li><a href="#2-들어가기-전에">2. 들어가기 전에</a>
+    <ul>
+      <li><a href="#2-1-wsgi란">2-1. WSGI란?</a></li>
+      <li><a href="#2-2-전체-프로세스">2-2. 전체 프로세스</a></li>
+    </ul>
+  </li>
+  <li><a href="#3-nginx">3. Nginx</a>
+    <ul>
+      <li><a href="#3-1-nginx-설치하기">3-1. Nginx 설치하기</a></li>
+      <li><a href="#3-2-방화벽-설정하기">3-2. 방화벽 설정하기</a></li>
+      <li><a href="#3-3-웹-서버-확인하기">3-3. 웹 서버 확인하기</a></li>
+      <li><a href="#3-4-부록--nginx-상태-관련-명령어-정리">3-4. 부록 : Nginx 상태 관련 명령어 정리</a></li>
+    </ul>
+  </li>
+  <li><a href="#4-gunicorn">4. Gunicorn</a>
+    <ul>
+      <li><a href="#4-1-설치-전에-의존-패키지-설치하기">4-1. 설치 전에 의존 패키지 설치하기</a></li>
+      <li><a href="#4-2-가상환경-설치하고-접속하기">4-2. 가상환경 설치하고 접속하기</a></li>
+      <li><a href="#4-3-gunicorn-설치하기">4-3. Gunicorn 설치하기</a></li>
+      <li><a href="#4-4-entry-point-파일-만들기">4-4. Entry Point 파일 만들기</a></li>
+      <li><a href="#4-5-service-파일-만들기">4-5. service 파일 만들기</a></li>
+    </ul>
+  </li>
+  <li><a href="#5-gunicorn을-nginx와-연결시키기">5. Gunicorn을 Nginx와 연결시키기</a>
+    <ul>
+      <li><a href="#5-1-들어가기-전에">5-1. 들어가기 전에</a></li>
+      <li><a href="#5-2-nginx의-설정-파일-생성하기">5-2. nginx의 설정 파일 생성하기</a></li>
+      <li><a href="#5-3-sites-available의-파일과-sites-enabled의-파일을-연결시키기">5-3. sites-available의 파일과 sites-enabled의 파일을 연결시키기</a></li>
+      <li><a href="#5-4-마무리-작업">5-4. 마무리 작업</a></li>
+      <li><a href="#5-5-접속해서-확인하기">5-5. 접속해서 확인하기</a></li>
+      <li><a href="#5-6-정상-작동하지-않는다면">5-6. 정상 작동하지 않는다면</a></li>
+    </ul>
+  </li>
+</ul>
+
+</nav>
+
+          
+        </aside>
+        <main class="site-main" id="site-main" aria-label="Content" tabindex="1">
+          <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+
+    <h1 class="post-title p-name" itemprop="name headline">Nginx와 Gunicorn으로 Flask앱 배포하기</h1>
+    <p class="post-meta"><time class="dt-published" datetime="2021-02-08T00:00:00+09:00" itemprop="datePublished">
+        Feb 8, 2021
+      </time>• 
+          <span itemprop="author" itemscope itemtype="http://schema.org/Person">
+            <span class="p-author h-card" itemprop="name">jimin-mjl</span></span></p>
+
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <h2 id="1-참고-자료">1. 참고 자료</h2>
+<ul>
+  <li><a href="https://www.digitalocean.com/community/tutorials/how-to-install-nginx-on-ubuntu-18-04">nginx 설치</a></li>
+  <li><a href="https://www.digitalocean.com/community/tutorials/how-to-serve-flask-applications-with-gunicorn-and-nginx-on-ubuntu-18-04">gunicorn 설치 및 nginx와 연결</a></li>
+  <li><a href="https://youtu.be/kDRRtPO0YPA">우분투 서버에서 flask앱 배포하기</a></li>
+</ul>
+
+<p>처음에 세 번째의 영상을 보고 따라했는데, 연결이 잘 되는 것을 확인했지만 gunicorn에서 빠져나왔을 때 서버가 멈춘다. 내가 원하는 건 계속 돌아가게 하는 거였기 때문에 이 영상을 통해서는 연결이 잘 되는지 확인한 다음, 위의 두 글을 통해 이후의 단계를 진행했다.</p>
+
+<hr />
+<h2 id="2-들어가기-전에">2. 들어가기 전에</h2>
+<p>처음에는 nginx와 uwsgi를 사용하려고 했는데, uwsgi를 설치하는데 계속 에러가 나서 gunicorn으로 시도해보았다. (uwsgi는 어떻게 읽는 걸까?)</p>
+
+<p>모르는 게 너무 많아서 아직 이해를 다 못한 부분도 많지만 일단 이해한 만큼 적어보았다.</p>
+<h3 id="2-1-wsgi란">2-1. WSGI란?</h3>
+<p>CGI(Common Gateway Interface)의 일종으로, 프레임워크의 웹 서버이다.</p>
+
+<p>WSGI에는 두 종류가 있다.</p>
+<ul>
+  <li>web server : Nginx, Apache</li>
+  <li>web app : 파이썬 스크립트 파일</li>
+</ul>
+
+<p>그럼 Gunicorn, uWSGI은? web server와 web app의 middleware라고 할 수 있다.</p>
+
+<p>정리하자면 이런 식이다.</p>
+<ul>
+  <li>내가 만든 앱 : flask app</li>
+  <li>웹 서버 : nginx</li>
+  <li>앱과 웹 서버를 연결하는 미들웨어: gunicorn</li>
+</ul>
+
+<h4 id="참고-글"><a href="https://paphopu.tistory.com/entry/WSGI%EC%97%90-%EB%8C%80%ED%95%9C-%EC%84%A4%EB%AA%85-WSGI%EB%9E%80-%EB%AC%B4%EC%97%87%EC%9D%B8%EA%B0%80">참고 글</a></h4>
+
+<h3 id="2-2-전체-프로세스">2-2. 전체 프로세스</h3>
+<blockquote>
+  <p>client request -&gt; nginx : web proxy server -&gt; gunicorn : application server -&gt; flask app</p>
+</blockquote>
+
+<p>서버가 응답할 때는 요청 받은 순서 반대로 수행한다. 
+참고로 proxy server는  클라이언트와 서버를 중계하는 서버이다.</p>
+
+<hr />
+<h2 id="3-nginx">3. Nginx</h2>
+<h3 id="3-1-nginx-설치하기">3-1. Nginx 설치하기</h3>
+<div class="language-zsh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">sudo </span>apt update 
+<span class="nb">sudo </span>apt <span class="nb">install </span>nginx 
+</code></pre></div></div>
+<h3 id="3-2-방화벽-설정하기">3-2. 방화벽 설정하기</h3>
+<p>nginx의 접근을 허용하기 위해 방화벽 설정부터 해줘야 한다. 
+우선 <code class="language-plaintext highlighter-rouge">sudo ufw app list</code> 를 통해 설정 가능한 방화벽을 확인하면 다음과 같이 나온다.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Available applications:
+  Nginx Full    // HTTP, HTTPS 모두 허용
+  Nginx HTTP    // HTTP만 허용
+  Nginx HTTPS   // HTTPS만 허용
+  OpenSSH
+</code></pre></div></div>
+<p>설정은 <code class="language-plaintext highlighter-rouge">sudo ufw allow 'Nginx HTTP'</code> 를 통해 가능하고,
+<code class="language-plaintext highlighter-rouge">sudo ufw status</code> 를 통해 확인할 수 있다.</p>
+<h3 id="3-3-웹-서버-확인하기">3-3. 웹 서버 확인하기</h3>
+<p>nginx가 설치되면 자동으로 실행된다. 
+상태를 확인하고 싶다면 <code class="language-plaintext highlighter-rouge">systemctl status nginx</code> 로 가능하다.</p>
+
+<p>그런데, 내 경우에는 이게 inactive 상태였다. 
+그래서 <code class="language-plaintext highlighter-rouge">sudo ufw enable</code> 을 추가적으로 입력해서 active상태로 만들었다.</p>
+<h3 id="3-4-부록--nginx-상태-관련-명령어-정리">3-4. 부록 : Nginx 상태 관련 명령어 정리</h3>
+<div class="language-zsh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">sudo </span>systemctl start nginx   // nginx 시작
+<span class="nb">sudo </span>systemctl stop nginx   // nginx 멈추기
+<span class="nb">sudo </span>systemctl restart nginx   // nginx 재시작<span class="o">(</span>멈추고 다시 시작<span class="o">)</span>
+<span class="nb">sudo </span>systemctl reload nginx   // 설정 파일만 수정했을 경우 연결을 끊지 않고 수정사항 적용시키기
+<span class="nb">sudo </span>systemctl disable nginx   // nginx는 서버가 부팅되면 자동으로 시작된다. 이 설정을 지우기
+<span class="nb">sudo </span>systemctl <span class="nb">enable </span>nginx   // 위의 설정을 다시 <span class="nb">enable </span>시키기
+</code></pre></div></div>
+<hr />
+<h2 id="4-gunicorn">4. Gunicorn</h2>
+<h3 id="4-1-설치-전에-의존-패키지-설치하기">4-1. 설치 전에 의존 패키지 설치하기</h3>
+<div class="language-zsh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">sudo </span>apt update
+<span class="nb">sudo </span>apt <span class="nb">install </span>python3-pip python3-dev build-essential libssl-dev libffi-dev python3-setuptools
+</code></pre></div></div>
+<h3 id="4-2-가상환경-설치하고-접속하기">4-2. 가상환경 설치하고 접속하기</h3>
+<div class="language-zsh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">sudo </span>apt <span class="nb">install </span>python3-venv
+python3 <span class="nt">-m</span> venv venv-name
+<span class="nb">source </span>venv-name/bin/activate
+</code></pre></div></div>
+<p>이제 가상환경 안에서 작업한다.</p>
+<h3 id="4-3-gunicorn-설치하기">4-3. Gunicorn 설치하기</h3>
+<div class="language-zsh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>pip <span class="nb">install </span>wheel // package에 wheel archive가 없어도 설치되게끔 하기 위해서라는데 일단 설치한다. 
+pip <span class="nb">install </span>gunicorn flask
+which gunicorn // gunicorn 경로 확인하기
+</code></pre></div></div>
+<p>wheel 같은 경우는 uwsgi를 설치하려고 했을 때 uwsgi를 위한 wheel이 없다는 에러 메세지가 계속 뜨던데 그런 걸 말하는 것 같다.</p>
+<h3 id="4-4-entry-point-파일-만들기">4-4. Entry Point 파일 만들기</h3>
+<p>app을 import한 wsgi.py 파일을 만들어줬다. app.py를 그냥 entry point로 써도 되지 않을까 싶어서 처음에는 따로 만들지 않았는데 나중에 에러가 나서 찾아보다가 django는 wsgi.py파일을 찾아본다는 소리를 들었다. 근데 이건 flask 앱인데 이 문제가 맞을까 싶었지만 혹시 모르니까 일단 만들어줬다.</p>
+
+<p>만들고 나서 실행되는지 체크해보기 : <code class="language-plaintext highlighter-rouge">gunicorn wsgi:app</code>
+wsgi는 파일 이름이고 app은 app 이름이다.</p>
+
+<h3 id="4-5-service-파일-만들기">4-5. service 파일 만들기</h3>
+<p>가상환경에서 빠져나와서 작업한다. 
+빠져나오는 명령어는 <code class="language-plaintext highlighter-rouge">deactivate</code>.</p>
+<h4 id="1-etcsystemdsystem-디렉토리-안에-etcsystemdsystemmyflaskservice-파일을-만들어준다">1) /etc/systemd/system/ 디렉토리 안에 /etc/systemd/system/myflask.service 파일을 만들어준다.</h4>
+<div class="language-zsh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">sudo </span>nano /etc/systemd/system/myproject.service   // 참고로 etc 앞에 /가 안붙으면 새로운 파일일 경우 알아서 만들어주지 않으니 붙여준다.
+</code></pre></div></div>
+<p>파일 이름은 아무거나 해도 상관없지만 되도록 다른 파일 이름이나 디렉토리 이름이랑 통일시켜주자…! 헷갈려 죽겠다.
+여기서는 구분을 위해 파일 이름은 myflask, 프로젝트 디렉토리 이름은 myproject, 유저 이름은 userme로 했다.</p>
+
+<h4 id="2-다음의-내용을-작성한다">2) 다음의 내용을 작성한다.</h4>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[Unit]
+Description=Gunicorn instance to serve myflask
+After=network.target
+
+[Service]
+User=userme
+Group=www-data
+WorkingDirectory=/home/userme/myproject
+Environment="PATH=/home/userme/myproject/myproject-env/bin"
+ExecStart=/home/userme/myproject/myproject-env/bin/gunicorn --workers 3 --bind unix:myflask.sock -m 007 wsgi:app
+
+[Install]
+WantedBy=multi-user.target
+</code></pre></div></div>
+<p>unix:myflask.sock 부분이 nginx와 연결될 socket 파일이다.</p>
+<h4 id="3-service-파일-실행시키고-상태-확인하기">3) service 파일 실행시키고 상태 확인하기</h4>
+<div class="language-zsh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">sudo </span>systemctl start myflask
+<span class="nb">sudo </span>systemctl <span class="nb">enable </span>myflask
+<span class="nb">sudo </span>systemctl status myflask
+</code></pre></div></div>
+<h4 id="4-오류-해결하기">4) 오류 해결하기</h4>
+<p>위의 예시 그대로 했더니 상태가 failed(result:exit-code) 로 뜨길래,
+service 파일의 <code class="language-plaintext highlighter-rouge">ExecStart= --workers 3</code> 
+이 부분을 <code class="language-plaintext highlighter-rouge">--workers 1</code> 으로 바꿔준 다음,
+<code class="language-plaintext highlighter-rouge">sudo systemctl restart myflask</code> 로 재시작했더니 잘 작동하는 것을 확인했다.</p>
+
+<hr />
+
+<h2 id="5-gunicorn을-nginx와-연결시키기">5. Gunicorn을 Nginx와 연결시키기</h2>
+<h3 id="5-1-들어가기-전에">5-1. 들어가기 전에</h3>
+<p>우선 nginx의 디렉토리 구조를 이해할 필요가 있다.
+나도 자세히는 이해하지 못했기 때문에 우선 이해한 만큼만 적어본다.
+여기서는 두 개만 알면 된다.</p>
+<ul>
+  <li>/etc/nginx/sites-available/ : 여기서 설정 파일을 만들어서 수정한다.</li>
+  <li>/etc/nginx/sites-enabled/ : sited-available 디렉토리의 설정 파일이 이 디렉토리의 파일과 link되어 nginx에 적용된다.</li>
+</ul>
+
+<p>정리하자면, 설정파일을 우리가 생성하고 수정할 때는 sites-available에 있는 파일을 건드리고 sites-enabled의 파일은 직접 건드리지 않는다.
+그런데 nginx는 sites-enabled를 찾아보지 sites-available을 찾아보지 않는다.
+그래서 sites-available에서 수정한 파일을 sites-enable의 파일과 링크시켜서 수정 사항이 반영되도록 한다.
+(그런데 참고한 영상에서는 바로 sites-enabled의 파일을 수정하던데 별 상관 없는건가 싶기도 하다)</p>
+
+<h3 id="5-2-nginx의-설정-파일-생성하기">5-2. nginx의 설정 파일 생성하기</h3>
+<p>/etc/nginx/sites-available/에 새 설정 파일을 만들어준다.</p>
+<h4 id="a-기존의-파일default을-삭제하고-내-것myflask으로-다시-만들어준다">a. 기존의 파일(default)을 삭제하고 내 것(myflask)으로 다시 만들어준다.</h4>
+<div class="language-zsh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">sudo rm</span> /etc/nginx/sites-available/default
+<span class="nb">sudo rm</span> /etc/nginx/sites-enabled/default
+<span class="nb">sudo touch</span> /etc/nginx/sites-available/myflask
+</code></pre></div></div>
+<h4 id="b-에디터로-열어서-다음의-내용을-작성하고-저장한다">b. 에디터로 열어서 다음의 내용을 작성하고 저장한다.</h4>
+<p><code class="language-plaintext highlighter-rouge">sudo nano /etc/nginx/sites-available/myflask</code> 로 파일을 열어준다.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>server {
+	listen 80 default_server;
+	listen [::]:80 default_server;
+	server_name 0.0.0.0;
+	location / {
+		include proxy_params;
+		proxy_pass http://unix:/home/sammy/myproject/myproject.sock; // gunicorn service 파일에서 socket 파일의 경로
+	}
+}
+</code></pre></div></div>
+<p>내 경우 proxy_pass는 <code class="language-plaintext highlighter-rouge">http://unix:/home/userme/myproject/myflask.sock</code> 이다.</p>
+<h3 id="5-3-sites-available의-파일과-sites-enabled의-파일을-연결시키기">5-3. sites-available의 파일과 sites-enabled의 파일을 연결시키기</h3>
+<p>두 디렉토리의 서로 다른 파일 사이에 심볼릭 링크를 생성해서 연결시키는 작업을 해준다.</p>
+<div class="language-zsh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">sudo ln</span> <span class="nt">-s</span> /etc/nginx/sites-available/myflask /etc/nginx/sites-enabled/myflask    
+</code></pre></div></div>
+<p>ln : link, -s : symbolic</p>
+<h3 id="5-4-마무리-작업">5-4. 마무리 작업</h3>
+<p>마지막으로 해당 설정 파일에 문법 오류가 없는지 체크하고, 아무 문제가 없으면 nginx를 재시작한다.</p>
+<div class="language-zsh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">sudo </span>nginx <span class="nt">-t</span>  // 문법 오류 체크
+<span class="nb">sudo </span>systemctl restart nginx
+</code></pre></div></div>
+<h3 id="5-5-접속해서-확인하기">5-5. 접속해서 확인하기</h3>
+<p>이제 원격 IP 주소로 접속해서 잘 뜨는지 확인하면 끝!</p>
+<h3 id="5-6-정상-작동하지-않는다면">5-6. 정상 작동하지 않는다면</h3>
+<p>만약 여기서 잘 안되면 방화벽을 확인해보자. 가상머신의 네트워킹도 확인해보면서 이것저것 시도해보자!</p>
+<div class="language-zsh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">sudo </span>ufw app list
+<span class="nb">sudo </span>ufw allow <span class="s1">'Nginx Full'</span>  // HTTP, HTTPS 모두 접근 허용
+<span class="nb">sudo </span>ufw status
+</code></pre></div></div>
+
+  </div>
+
+  <footer class="post-footer">
+    
+      <div class="post-meta">
+        <i class="fas fa-folder"></i>
+        <ul class="post-taxonomies post-categories">
+          
+          
+            <li class="post-category">
+              
+              <a href="/categories/#%EC%84%9C%EB%B2%84%EA%B0%9C%EB%B0%9C">서버개발</a>
+            </li>
+          
+        </ul>
+      </div>
+    
+
+    
+      <div class="post-meta">
+        <i class="fas fa-tags"></i>
+        <ul class="post-taxonomies post-tags">
+          
+          
+            <li class="post-tag">
+              
+              <a href="/tags/#flask">flask</a>
+            </li>
+          
+            <li class="post-tag">
+              
+              <a href="/tags/#gunicorn">gunicorn</a>
+            </li>
+          
+            <li class="post-tag">
+              
+              <a href="/tags/#nginx">nginx</a>
+            </li>
+          
+        </ul>
+      </div>
+    
+
+    <nav class="post-pagination" role="navigation">
+      
+
+      
+        <a class="post-next" href="/%EC%84%9C%EB%B2%84%EA%B0%9C%EB%B0%9C/2021/04/26/wsgi-explained.html">
+          <h4 class="post-pagination-label">Next</h4>
+          <span class="post-pagination-title">
+            Nginx와 Gunicorn 둘 중 하나만 써도 될까?
+ <i class="fas fa-arrow-right"></i>
+          </span>
+        </a>
+      
+    </nav>
+  </footer>
+
+  
+  
+</article>
+
+          <footer class="site-footer">
+            <div class="footer-col-wrapper">
+
+  <div class="footer-col">
+    <div class="copyright">
+      
+      
+      
+      
+      <p>Copyright © 2021&nbsp;-&nbsp;2022 jimin-mjl; All rights reserved.</p>
+      
+    </div>
+    <p>
+      Powered by <a href="https://jekyllrb.com/">Jekyll</a> & <a href="https://github.com/ngzhio/jekyll-theme-hamilton">Hamilton</a>
+    </p>
+  </div>
+
+  <div class="footer-col">
+    <p>Personal Records of a philosophical libertine.</p>
+  </div>
+</div>
+
+          </footer>
+        </main>
+      </div>
+    </div>
+  </body>
+
+</html>
