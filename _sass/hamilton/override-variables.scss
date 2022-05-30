@@ -1,0 +1,5 @@
+// Placeholder to allow overriding predefined variables.
+$header-bg-color:       #1A1D21 !default;
+$highlight-color:       #05FF9E !default;
+$link-base-color:       darken($highlight-color, 20%) !default;
+$link-hover-color:       darken($highlight-color, 10%) !default;

@@ -1,0 +1,81 @@
+// Placeholder to allow customizing styles.
+@font-face {
+    font-family: "Libertines";
+    src: url("../../assets/fonts/The\ Libertines-GERSAN\ BORGE.ttf");
+}
+
+body {
+    font-family: 'Nanum Gothic', sans-serif;
+}
+
+.site-nav .current-page {
+    text-decoration: none; 
+    font-family: 'Libertines';
+    font-size: 1.1rem;
+}
+
+.site-title {
+    font-family: 'Libertines';
+    color: $highlight-color !important;
+}
+
+.site-title:visited {
+    color: $highlight-color !important;
+}
+
+.u-email {
+    font-size: 0.7rem;
+}
+
+.post-title {
+    color: $link-base-color;
+}
+
+.post-list, .post-content, .post-title {
+    font-family: 'Nanum Gothic', sans-serif;
+}
+
+.site-header {
+    background-color: $header-bg-color !important;
+}
+
+.site-nav {
+    background-color: $header-bg-color !important;
+}
+
+.site-nav ul a {
+    color: $highlight-color !important;
+}
+
+a:hover {
+    color: $link-hover-color !important;
+}
+
+ul.post-tags li {
+    background-color: $header-bg-color !important;
+}
+
+.post-tag a {
+    color: lighten($link-hover-color, 5%);
+}
+
+.post-tag a:hover {
+    color: $highlight-color !important;
+}
+
+a.social-icon {
+    color: $header-bg-color !important;
+}
+
+a.social-icon:hover {
+    color: $link-hover-color !important;
+}
+
+.toc-title {
+    background-color: $header-bg-color !important;
+    color: $highlight-color !important;
+}
+
+ul.toc a:hover {
+    background-color: white !important;
+}
